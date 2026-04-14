@@ -110,8 +110,15 @@ rule spikein_simple_scale_factors:
 
 def get_scale_factor_file(wildcards):
     curr_enriched = ""
-    if (wildcards.sample in samples_no_controls['sample'].values):
+    is_control = wildcards.sample not in samples_no_controls['sample'].values
+    
+    if not is_control:
         curr_enriched = samples_no_controls[samples_no_controls['sample']==wildcards.sample]['enriched_factor'].values[0]
+    
+    # controls fall back to baseCov regardless of scale_method
+    if is_control and wildcards.scale_method in ("csaw_bkgd", "csaw_hiAbund", "csaw.bkgd_spikein", "csaw.hiAbund_spikein"):
+        return "analysis/bigwig_norm_factors/base_cov_scale_factors.tsv"
+    
     if (wildcards.scale_method == "csaw_bkgd"):
         return "analysis/bigwig_norm_factors/{enriched_factor}_csaw_win{width}_bkgd_endogenous.tsv".format(enriched_factor=curr_enriched, width=csaw_win_sizes[0])
     elif (wildcards.scale_method == "csaw_hiAbund"):
