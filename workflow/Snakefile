@@ -29,9 +29,9 @@ samples = units[["sample","control","sample_group","enriched_factor"]].drop_dupl
 if not samples['sample'].is_unique:
     raise Exception('A sample has more than one combination of control, sample_group, enriched_factor.')
 
-sample_grps_df = units[["sample_group","enriched_factor"]].drop_duplicates()
-if not sample_grps_df['sample_group'].is_unique:
-    raise Exception('Sample group must be unique across enriched_factor levels.')
+# sample_grps_df = units[["sample_group","enriched_factor"]].drop_duplicates()
+# if not sample_grps_df['sample_group'].is_unique:
+#     raise Exception('Sample group must be unique across enriched_factor levels.')
 
 # Filter for sample rows that are not controls
 controls_list = list(itertools.chain.from_iterable( [x.split(',') for x in samples['control'].values if not pd.isnull(x)] ))
@@ -59,7 +59,7 @@ ref_fai = config['ref']['fai']
 fai_parsed = pd.read_table(ref_fai, names=['chr','len','offset','bases_per_line','bytes_per_line'])
 chrom_files = [config['keep_chroms_file'], config['spikein_chroms_file']]
 for chrom_file in chrom_files:
-    if (Path(chrom_file).is_file):
+    if(chrom_file and Path(chrom_file).is_file()):
         num_lines = sum(1 for _ in open(chrom_file))
         if num_lines != 1:
             raise Exception(f"{chrom_file} should have only one line.")
@@ -88,4 +88,4 @@ rule all:
         expand("analysis/macs3_broad/{sample.sample}_peaks.broadPeak", sample=samples.itertuples()) if config['macs3']['run_broad'] else [],
         expand("analysis/csaw_win{width}/csaw_summary/{enriched_factor}__{peak_type}__{norm_type}/csaw_summary.html", width=csaw_win_sizes, enriched_factor=enriched_factors, peak_type = config['csaw']['peak_type'], norm_type = config['csaw']['norm_type']) if config['csaw']['run'] else [],
         expand("analysis/deeptools_heatmap_peaks/{scale_method}/{enriched_factor}__{peak_type}.pdf", scale_method=bigwig_norms, enriched_factor=enriched_factors, peak_type=peak_types),
-
+        expand("analysis/deeptools_plotFingerprint/{enriched_factor}_fingerprint_endogenous.pdf", enriched_factor=enriched_factors),

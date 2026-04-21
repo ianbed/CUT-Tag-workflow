@@ -55,6 +55,44 @@ rule deeptools_heatmap_peaks:
 
         """
 
+
+rule deeptools_plotFingerprint:
+    """
+    Plot deeptools fingerprint (https://deeptools.readthedocs.io/en/latest/content/tools/plotFingerprint.html) with endogenous bams
+    """
+    input:
+        bam=lambda wildcards: expand("analysis/bowtie2_filt_endogenous/{sample}.sorted.bam",
+        sample=samples_no_controls[samples_no_controls['enriched_factor']==wildcards.enriched_factor]['sample']),
+    output:
+        plot="analysis/deeptools_plotFingerprint/{enriched_factor}_fingerprint_endogenous.pdf",
+        counts="analysis/deeptools_plotFingerprint/{enriched_factor}_fingerprint_endogenous_counts.tab"
+    benchmark:
+        "benchmarks/deeptools_plotFingerprint/{enriched_factor}_fingerprint_endogenous.txt"
+    envmodules:
+        config['modules']['deeptools']
+    params:
+        labels=lambda wildcards: expand("{sample}",
+            sample=samples_no_controls[samples_no_controls['enriched_factor']==wildcards.enriched_factor]['sample']),
+        temp="analysis/deeptools_plotFingerprint/tmp",
+    threads: 16
+    resources:
+        mem_gb=100,
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
+    shell:
+        """
+        export TMPDIR={params.temp}
+        plotFingerprint \
+        -b {input.bam} \
+        --labels {params.labels} \
+        --skipZeros \
+        -T "Fingerprints of {wildcards.enriched_factor} Endogenous BAMs"  \
+        --plotFile {output.plot} \
+        --outRawCounts {output.counts}
+        echo "END plotFingerprint"
+        echo "END plotFingerprint" 1>&2
+        """
+
+
 def get_macs3_bams(wildcards):
     macs3_bams = { 'trt': "analysis/bowtie2_filt_endogenous/{sample}.sorted.bam".format(sample=wildcards.sample) }
     
