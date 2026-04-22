@@ -29,6 +29,11 @@ samples = units[["sample","control","sample_group","enriched_factor"]].drop_dupl
 if not samples['sample'].is_unique:
     raise Exception('A sample has more than one combination of control, sample_group, enriched_factor.')
 
+sample_grps_df = units[["sample_group","enriched_factor"]].drop_duplicates()
+if sample_grps_df.groupby('sample_group')['enriched_factor'].count().eq(0).any():
+    raise Exception('Each sample group must be enriched for at least one factor.')
+# A sample group can be enriched for multiple factors and would raise an exception which is erroneous. 
+# The above code checks if any sample group has zero enriched factors, which is a different validation.
 # sample_grps_df = units[["sample_group","enriched_factor"]].drop_duplicates()
 # if not sample_grps_df['sample_group'].is_unique:
 #     raise Exception('Sample group must be unique across enriched_factor levels.')
